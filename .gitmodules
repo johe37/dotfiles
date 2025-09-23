@@ -1,3 +1,6 @@
 [submodule ".config/nvim"]
 	path = .config/nvim
 	url = git@github.com:johe37/nvim.git
+[submodule ".config/aerospace"]
+	path = .config/aerospace
+	url = git@github.com:johe37/aerospace.git
