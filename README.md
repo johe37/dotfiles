@@ -1,8 +1,7 @@
 # dotfiles
 
-## Init git submodules
+Init the dotfiles by running:
 
 ```shell
-git submodule init
-git submodule update
+bash init.sh
 ```
