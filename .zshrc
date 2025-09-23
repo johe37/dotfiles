@@ -43,5 +43,5 @@ export XDG_CONFIG_HOME="$HOME/.config"
 for file in ~/.config/zshrc.d/* ; do source "$file" ; done
 
 # My scripts
-export PATH="$HOME/.local/share/scripts/:$PATH"
+export PATH="$HOME/.scripts/:$PATH"
 

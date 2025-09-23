@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [[ $# -eq 1 ]]; then
+    selected=$1
+else
+    selected=$(find "$HOME" "$HOME/repos" "$HOME/repos/personal" "$HOME/repos/vendor" -mindepth 1 -maxdepth 1 -type d | fzf)
+fi
+
+if [[ -z $selected ]]; then
+    exit 0
+fi
+
+selected_name=$(basename "$selected" | tr . _)
+tmux_running=$(pgrep tmux)
+
+if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
+    # No tmux server is running, start a new session and attach
+    tmux new-session -s $selected_name -c $selected
+    exit 0
+fi
+
+if [[ -z $TMUX ]]; then
+    # Tmux server is running but no client is attached, attach to the new session
+    if ! tmux has-session -t $selected_name 2> /dev/null; then
+        tmux new-session -ds $selected_name -c $selected
+    fi
+    tmux attach-session -t $selected_name
+else
+    # Tmux server and client are running, switch to the session
+    if ! tmux has-session -t $selected_name 2> /dev/null; then
+        tmux new-session -ds $selected_name -c $selected
+    fi
+    tmux switch-client -t $selected_name
+fi
+
