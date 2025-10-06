@@ -3,7 +3,7 @@
         email = 56338810+johe37@users.noreply.github.com
 [core]
         editor = vim
-  pager = delta
+        pager = delta
 [interactive]
         diffFilter = delta --color-only
 [delta]
