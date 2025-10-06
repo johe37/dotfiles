@@ -58,6 +58,7 @@ link_dotfiles() {
 
   # List of files/dirs to symlink
   files=(
+    .gitconfig
     .zshrc
     .vimrc
     .tmux.conf
