@@ -38,7 +38,6 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LC_CTYPE=en_US.UTF-8
 export XDG_CONFIG_HOME="$HOME/.config"
-export vim=nvim
 
 # Include $HOME/.johe/zshrc.d/* user settings
 for file in ~/.config/zshrc.d/* ; do source "$file" ; done
