@@ -1,15 +1,15 @@
 [user]
-        name = johe
-        email = 56338810+johe37@users.noreply.github.com
+  name = johe
+  email = 56338810+johe37@users.noreply.github.com
 [core]
-        editor = vim
-        pager = delta
+  editor = vim
+  pager = delta
 [interactive]
-        diffFilter = delta --color-only
+  diffFilter = delta --color-only
 [delta]
-        navigate = true
-        line-numbers = true
-        side-by-side = true
+  navigate = true
+  line-numbers = true
+  side-by-side = true
 [merge]
   conflictstyle = diff3
 [diff]
