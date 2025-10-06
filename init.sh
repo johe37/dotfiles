@@ -52,6 +52,25 @@ install_packages() {
   esac
 }
 
+install_oh_my_zsh() {
+  local oh_my_zsh_dir="$HOME/.oh-my-zsh"
+
+  if [ -d $oh_my_zsh_dir ]; then
+    echo "$oh_my_zsh_dir already exists, skipping install..."
+  else
+    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+  fi
+}
+
+install_zsh_syntax_highlightning() {
+  local dir="$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
+  if [ -d $dir ]; then
+    echo "$dir already exists, skipping install..."
+  else
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting.git $dir
+  fi
+}
+
 link_dotfiles() {
   local dotfiles_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
   echo "🔗 Linking dotfiles from $dotfiles_dir..."
@@ -67,6 +86,7 @@ link_dotfiles() {
     .config/ghostty
     .config/lazygit
     .config/nvim
+    .config/zshrc.d
   )
 
   for file in "${files[@]}"; do
@@ -74,7 +94,7 @@ link_dotfiles() {
     source="$dotfiles_dir/$file"
 
     if [ -e "$target" ] || [ -L "$target" ]; then
-      echo "⚠️  $target already exists, skipping..."
+      echo "$target already exists, skipping linking..."
     else
       echo "✅ Linking $target → $source"
       ln -s "$source" "$target"
@@ -90,6 +110,8 @@ link_dotfiles() {
 
 git submodule update --init --recursive
 install_packages
+install_oh_my_zsh
+install_zsh_syntax_highlightning
 link_dotfiles
 
 echo "🎉 Setup complete!"
