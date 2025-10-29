@@ -71,6 +71,15 @@ install_zsh_syntax_highlightning() {
   fi
 }
 
+install_powerlevel10k() {
+  local dir="$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
+  if [ -d $dir ]; then
+    echo "$dir already exists, skipping install..."
+  else
+    git clone --depth=1 https://github.com/romkatv/powerlevel10k.git $dir
+  fi
+}
+
 link_dotfiles() {
   local dotfiles_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
   echo "🔗 Linking dotfiles from $dotfiles_dir..."
@@ -79,6 +88,7 @@ link_dotfiles() {
   files=(
     .gitconfig
     .zshrc
+    .p10k.zsh
     .vimrc
     .tmux.conf
     .scripts
@@ -87,6 +97,7 @@ link_dotfiles() {
     .config/lazygit
     .config/nvim
     .config/zshrc.d
+    .local/share/fonts
   )
 
   for file in "${files[@]}"; do
@@ -96,7 +107,7 @@ link_dotfiles() {
     if [ -e "$target" ] || [ -L "$target" ]; then
       echo "$target already exists, skipping linking..."
     else
-      echo "✅ Linking $target → $source"
+      echo "✅ Linking $source → $target"
       ln -s "$source" "$target"
     fi
   done
@@ -112,6 +123,7 @@ git submodule update --init --recursive
 install_packages
 install_oh_my_zsh
 install_zsh_syntax_highlightning
+install_powerlevel10k
 link_dotfiles
 
 echo "🎉 Setup complete!"
