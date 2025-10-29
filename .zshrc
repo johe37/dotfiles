@@ -21,7 +21,7 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 plugins=(
   git git-extras colored-man-pages common-aliases
   command-not-found dircycle dirhistory history
-  zsh-syntax-highlighting ssh-agent
+  zsh-syntax-highlighting ssh-agent ssh
   brew kubectl nmap
 )
 
