@@ -23,7 +23,6 @@ install_packages() {
     tmux
     ripgrep
     fzf
-    lazygit
     neovim
     git-delta
   )
