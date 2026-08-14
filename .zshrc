@@ -5,9 +5,6 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
 # Path to your oh-my-zsh installation.
 export ZSH=$HOME/.oh-my-zsh
 
@@ -17,6 +14,9 @@ export ZSH=$HOME/.oh-my-zsh
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
+# Skip insecure-directory audit during compinit.
+ZSH_DISABLE_COMPFIX=true
+
 # Which plugins would you like to load?
 plugins=(
   git git-extras colored-man-pages common-aliases
@@ -24,6 +24,11 @@ plugins=(
   zsh-syntax-highlighting ssh-agent ssh
   brew kubectl nmap
 )
+
+# Grok completions must be on fpath before oh-my-zsh runs compinit.
+# A second compinit at the bottom rewrote the dump file on every start.
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
 
 source $ZSH/oh-my-zsh.sh
 
@@ -45,3 +50,11 @@ for file in ~/.config/zshrc.d/* ; do source "$file" ; done
 # My scripts
 export PATH="$HOME/.scripts/:$PATH"
 
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+fpath=(~/.grok/completions/zsh $fpath)
+# <<< grok installer <<<
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
