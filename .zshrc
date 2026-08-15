@@ -17,6 +17,9 @@ ZSH_THEME="powerlevel10k/powerlevel10k"
 # Skip insecure-directory audit during compinit.
 ZSH_DISABLE_COMPFIX=true
 
+# Don't print "Starting ssh-agent ..." (breaks p10k instant prompt after reboot).
+zstyle :omz:plugins:ssh-agent quiet yes
+
 # Which plugins would you like to load?
 plugins=(
   git git-extras colored-man-pages common-aliases
