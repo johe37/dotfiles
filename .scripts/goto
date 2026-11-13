@@ -1,35 +1,154 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# goto — fuzzy-find a git repo under ~/repos and jump into a tmux session for it.
+#
+# Usage:
+#   goto            interactive fzf picker
+#   goto <query>    pre-fill the fzf query
+#   goto <dir>      open a tmux session for <dir> directly (no picker)
+#
+# Internal (used by other scripts, e.g. `gito`, not meant to be typed by hand):
+#   goto --open <rel-path> <abs-path>
+#       skip the picker entirely and just create/attach the tmux session for
+#       this repo, recording it in the cache so it shows up in future picks.
+#
+# Config:
+#   GOTO_ROOT   root folder to scan for repos (default: ~/repos)
 
-if [[ $# -eq 1 ]]; then
-    selected=$1
-else
-    selected=$(find "$HOME" "$HOME/repos" "$HOME/repos/personal" "$HOME/repos/vendor" -mindepth 1 -maxdepth 1 -type d | fzf)
+set -euo pipefail
+
+ROOT="${GOTO_ROOT:-$HOME/repos/}"
+CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/goto"
+CACHE_FILE="$CACHE_DIR/repos.tsv"
+
+sanitize() {
+    # tmux forbids '.' and ':' in session names
+    echo "$1" | tr '.:' '__'
+}
+
+open_tmux_session() {
+    local rel="$1" abs="$2" base session
+
+    base="$(basename "$rel")"
+    session="$(sanitize "$base")"
+
+    if ! tmux has-session -t "=$session" 2>/dev/null; then
+        tmux new-session -d -s "$session" -c "$abs"
+    fi
+
+    if [[ -n "${TMUX:-}" ]]; then
+        tmux switch-client -t "=$session"
+    else
+        tmux attach-session -t "=$session"
+    fi
+}
+
+if ! command -v tmux >/dev/null 2>&1; then
+    echo "goto: tmux is not installed" >&2
+    exit 1
 fi
 
-if [[ -z $selected ]]; then
+# Internal mode used by fzf's ctrl-r "reload" binding below: rescan and print
+# the fresh list to stdout, nothing else.
+if [[ "${1:-}" == "--list-refresh" ]]; then
+    mkdir -p "$CACHE_DIR"
+    find "$ROOT" -mindepth 1 -type d \
+        \( -exec test -e "{}/.git" \; -a -print -prune \) \
+        2>/dev/null \
+    | sort -u \
+    | while IFS= read -r abs; do
+        rel="${abs#"$ROOT"/}"
+        printf '%s\t%s\n' "$rel" "$abs"
+      done | tee "$CACHE_FILE"
     exit 0
 fi
 
-selected_name=$(basename "$selected" | tr . _)
-tmux_running=$(pgrep tmux)
-
-if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
-    # No tmux server is running, start a new session and attach
-    tmux new-session -s $selected_name -c $selected
+# Internal mode used by other scripts (e.g. `gito`) that already know exactly
+# which repo they want opened, and just need the tmux part done.
+if [[ "${1:-}" == "--open" ]]; then
+    REL_PATH="${2:?goto --open needs a relative path}"
+    ABS_PATH="${3:?goto --open needs an absolute path}"
+    mkdir -p "$CACHE_DIR"
+    if ! grep -qxF "$(printf '%s\t%s' "$REL_PATH" "$ABS_PATH")" "$CACHE_FILE" 2>/dev/null; then
+        printf '%s\t%s\n' "$REL_PATH" "$ABS_PATH" >> "$CACHE_FILE"
+    fi
+    open_tmux_session "$REL_PATH" "$ABS_PATH"
     exit 0
 fi
 
-if [[ -z $TMUX ]]; then
-    # Tmux server is running but no client is attached, attach to the new session
-    if ! tmux has-session -t $selected_name 2> /dev/null; then
-        tmux new-session -ds $selected_name -c $selected
-    fi
-    tmux attach-session -t $selected_name
-else
-    # Tmux server and client are running, switch to the session
-    if ! tmux has-session -t $selected_name 2> /dev/null; then
-        tmux new-session -ds $selected_name -c $selected
-    fi
-    tmux switch-client -t $selected_name
+if [[ $# -eq 1 && -d "$1" ]]; then
+    ABS_PATH="$(cd "$1" && pwd -P)"
+    open_tmux_session "$ABS_PATH" "$ABS_PATH"
+    exit 0
 fi
+
+if [[ ! -d "$ROOT" ]]; then
+    echo "goto: repo root '$ROOT' does not exist" >&2
+    exit 1
+fi
+
+if ! command -v fzf >/dev/null 2>&1; then
+    echo "goto: fzf is not installed" >&2
+    exit 1
+fi
+
+# --- 1. find repos (cached) ----------------------------------------------
+# A repo = any directory containing a .git entry (dir, or file for worktrees/submodules).
+# Cache file holds "relative/path<TAB>absolute/path" lines.
+
+REFRESH=0
+QUERY=""
+for arg in "$@"; do
+    case "$arg" in
+        -r|--refresh) REFRESH=1 ;;
+        *) QUERY="$arg" ;;
+    esac
+done
+
+scan_repos() {
+    mkdir -p "$CACHE_DIR"
+    # Prune the search as soon as a repo is found: don't descend into a repo's
+    # own working tree (or .git internals) looking for nested repos. This is
+    # what makes the scan fast on large repos.
+    find "$ROOT" -mindepth 1 -type d \
+        \( -exec test -e "{}/.git" \; -a -print -prune \) \
+        2>/dev/null \
+    | sort -u \
+    | while IFS= read -r abs; do
+        rel="${abs#"$ROOT"/}"
+        printf '%s\t%s\n' "$rel" "$abs"
+      done > "$CACHE_FILE"
+}
+
+if [[ "$REFRESH" -eq 1 || ! -s "$CACHE_FILE" ]]; then
+    scan_repos
+fi
+
+mapfile -t REPO_LINES < "$CACHE_FILE"
+
+if [[ ${#REPO_LINES[@]} -eq 0 ]]; then
+    echo "goto: no git repos found under $ROOT" >&2
+    exit 1
+fi
+
+# --- 2. pick one with fzf ------------------------------------------------
+# ctrl-r inside fzf triggers a rescan (useful after cloning a new repo)
+
+SELF="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+
+SELECTED_LINE=$(printf '%s\n' "${REPO_LINES[@]}" \
+    | fzf --with-nth=1 --delimiter='\t' \
+          --prompt="goto > " \
+          --height=90% --reverse \
+          --query="$QUERY" \
+          --header="ctrl-r: rescan for new repos" \
+          --bind "ctrl-r:reload($SELF --list-refresh)" \
+    ) || exit 0   # user pressed Esc/Ctrl-C
+
+[[ -z "$SELECTED_LINE" ]] && exit 0
+
+REL_PATH="${SELECTED_LINE%%$'\t'*}"
+ABS_PATH="${SELECTED_LINE##*$'\t'}"
+
+open_tmux_session "$REL_PATH" "$ABS_PATH"
 
