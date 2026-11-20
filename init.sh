@@ -5,7 +5,7 @@ set -uo pipefail
 
 DOTFILES_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
-STEPS="submodules packages ohmyzsh syntax p10k link"
+STEPS="submodules packages ohmyzsh syntax link"
 SKIPPED=2
 
 # "package" or "package:command" when the binary name differs.
@@ -26,7 +26,6 @@ PACKAGES=(
 LINKS=(
   .gitconfig
   .zshrc
-  .p10k.zsh
   .vimrc
   .tmux.conf
   .scripts
@@ -154,11 +153,6 @@ clone_once() {
 step_syntax() {
   clone_once https://github.com/zsh-users/zsh-syntax-highlighting.git \
     "$HOME/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting"
-}
-
-step_p10k() {
-  clone_once https://github.com/romkatv/powerlevel10k.git \
-    "$HOME/.oh-my-zsh/custom/themes/powerlevel10k"
 }
 
 step_link() {
