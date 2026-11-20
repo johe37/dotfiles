@@ -32,8 +32,6 @@ LINKS=(
   .config/ghostty
   .config/lazygit
   .config/nvim
-  .config/zshrc.d
-  .local/share/fonts
   AGENTS.md:.claude/CLAUDE.md
   AGENTS.md:.codex/AGENTS.md
 )
