@@ -29,7 +29,6 @@ LINKS=(
   .vimrc
   .tmux.conf
   .scripts
-  .config/aerospace
   .config/ghostty
   .config/lazygit
   .config/nvim
