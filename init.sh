@@ -128,6 +128,11 @@ step_packages() {
       return 1
       ;;
   esac
+
+  log "Installing tree-sitter..."
+  mkdir -p "$HOME/.local/bin"
+  curl -sL https://github.com/tree-sitter/tree-sitter/releases/latest/download/tree-sitter-linux-x64.gz | gunzip > "$HOME/.local/bin/tree-sitter"
+  chmod +x "$HOME/.local/bin/tree-sitter"
 }
 
 step_ohmyzsh() {
