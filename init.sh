@@ -19,6 +19,7 @@ PACKAGES=(
   fzf
   neovim:nvim
   git-delta:delta
+  npm
 )
 
 # "path" links $DOTFILES_DIR/path -> $HOME/path,
